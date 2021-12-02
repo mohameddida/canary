@@ -1,48 +1,64 @@
-const express = require('express')
-const path = require('path')
-const app = express()
-const port = 3000
-const mysql = require('mysql')
+//les definition
+const express = require("express");
+const path = require("path");
+const app = express();
+const port = 3000;
 
-
-// connection BD 
-const BD = mysql.createConnection({
-    host: 'localhost',
-    user : 'root',
-    password: '',
-    database : 'canary'
-
-})
-
-BD.connect(function(error) {
-    if(error) throw console.log('[-] failed to connect' + error) ;
-    console.log('[+] connected')
+//configuration
+var mysql = require("mysql");
+var con = mysql.createConnection({
+  host: "localhost",
+  user: "root",
+  password: "",
+  database: "canary",
+});
+con.connect(function (err) {
+  if (err) throw err;
+  console.log("[+] Connected !!");
 });
 
+const handlebars = require("express-handlebars");
+const hbs = handlebars.create({
+  layoutsDir: __dirname + "/views/layouts",
+  extname: "hbs",
+});
+app.engine("hbs", hbs.engine);
+app.set("view engine", "hbs");
+app.set("views", "./views");
+//code
+app.use(express.static("public"));
+app.get("/", (req, res) => {
+  res.render("main", {
+    layout: "index",
+  });
+});
+app.get("/signin", (req, res) => {
+  res.render("signin", {
+    layout: "index",
+  });
+});
+app.get("/signup", (req, res) => {
+  res.render("signup", {
+    layout: "index",
+  });
+});
 
-//ay 7aja tet7at f dossier public 
-app.use(express.static('public'))
-
-
-//import html file
-// route index page
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'views/index.html'))
-})
-// route Sign In
-app.get('/signin', (req, res) => {
-    res.sendFile(path.join(__dirname, 'views/signin.html'))
-})
-// route Sign Up
-app.get('/signup', (req, res) => {
-    res.sendFile(path.join(__dirname, 'views/signup.html'))
-})
-
-//route profile page
-app.get('/profil/:username', (req, res) => {
-    res.sendFile(path.join(__dirname, 'views/profile.html'))
-    res.send(console.log(req.params))
-})
+app.get("/profile/:username", (req, res) => {
+  
+  console.log(req.params.username);
+  con.query(
+    "SELECT * FROM user WHERE user_name =?",
+    req.params.username,
+    function (err, result, fields) {
+      if (err) throw err;
+      console.log(result);
+      res.render("profile", {
+        layout: "index",
+        userinfo: result,
+      });
+    }
+  );
+});
 app.listen(port, () => {
-    console.log(`Example app listening at http://localhost:${port}`)
-})
+  console.log(`Example app listening at http://localhost:${port}`);
+});
